@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5">
+        <div class="glass-card mt-5">
+            <h2 class="mb-4 fw-bold text-center">👤 Create Account</h2>
+            <form id="signupForm">
+                <div class="mb-3">
+                    <label for="name" class="form-label">📝 Full Name</label>
+                    <input type="text" class="form-control" id="name" name="name" required placeholder="Your Name">
+                </div>
+                <div class="mb-3">
+                    <label for="email" class="form-label">📧 Email Address</label>
+                    <input type="email" class="form-control" id="email" name="email" required placeholder="your@email.com">
+                </div>
+                <div class="mb-4">
+                    <label for="password" class="form-label">🔑 Password</label>
+                    <input type="password" class="form-control" id="password" name="password" required placeholder="••••••••">
+                </div>
+                <div id="errorMsg" class="text-danger mb-3" style="display:none;"></div>
+                <div id="successMsg" class="text-success mb-3" style="display:none;"></div>
+                <button type="submit" class="btn btn-primary w-100 mb-3">✅ Sign Up</button>
+            </form>
+            <div class="text-center">
+                <span class="text-secondary">Already have an account?</span> <a href="/login/" class="text-primary text-decoration-none fw-bold">Log In</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('signupForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    const data = Object.fromEntries(formData.entries());
+    const errorMsg = document.getElementById('errorMsg');
+    const successMsg = document.getElementById('successMsg');
+
+    errorMsg.style.display = 'none';
+    successMsg.style.display = 'none';
+
+    try {
+        const response = await fetch('/api/signup/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+        
+        if (response.ok) {
+            successMsg.innerText = 'खाता सफलतापूर्वक बनाया गया! लॉगिन पृष्ठ पर रीडायरेक्ट कर रहे हैं... | Account created successfully! Redirecting...';
+            successMsg.style.display = 'block';
+            setTimeout(() => {
+                window.location.href = '/login/';
+            }, 1500);
+        } else {
+            errorMsg.innerText = (result.error || 'साइनअप विफल। कृपया पुनः प्रयास करें। | Signup failed');
+            errorMsg.style.display = 'block';
+        }
+    } catch (error) {
+        errorMsg.innerText = 'सर्वर त्रुटि। कृपया बाद में कोशिश करें। | Server error occurred.';
+        errorMsg.style.display = 'block';
+    }
+});
+</script>
+{% endblock %}

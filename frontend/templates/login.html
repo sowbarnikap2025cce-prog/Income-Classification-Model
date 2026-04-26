@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5">
+        <div class="glass-card mt-5">
+            <h2 class="mb-4 fw-bold text-center">🔐 Welcome Back</h2>
+            <form id="loginForm">
+                <div class="mb-3">
+                    <label for="email" class="form-label">📧 Email Address</label>
+                    <input type="email" class="form-control" id="email" name="email" required placeholder="your@email.com">
+                </div>
+                <div class="mb-4">
+                    <label for="password" class="form-label">🔑 Password</label>
+                    <input type="password" class="form-control" id="password" name="password" required placeholder="••••••••">
+                </div>
+                <div id="errorMsg" class="text-danger mb-3" style="display:none;"></div>
+                <button type="submit" class="btn btn-primary w-100 mb-3">✅ Log In</button>
+            </form>
+            <div class="text-center">
+                <span class="text-secondary">Don't have an account?</span> <a href="/signup/" class="text-primary text-decoration-none fw-bold">Sign Up</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('loginForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    const data = Object.fromEntries(formData.entries());
+    const errorMsg = document.getElementById('errorMsg');
+
+    try {
+        const response = await fetch('/api/login/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+        
+        if (response.ok) {
+            localStorage.setItem('access_token', result.token);
+            window.location.href = '/';
+        } else {
+            errorMsg.innerText = (result.error || 'अमान्य साख पत्र | Invalid credentials');
+            errorMsg.style.display = 'block';
+        }
+    } catch (error) {
+        errorMsg.innerText = 'सर्वर त्रुटि। कृपया बाद में कोशिश करें। | Server error occurred.';
+        errorMsg.style.display = 'block';
+    }
+});
+</script>
+{% endblock %}

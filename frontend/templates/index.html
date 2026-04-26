@@ -1,0 +1,225 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="glass-card">
+            <h2 class="mb-4 fw-bold">Income Classification</h2>
+            <p class="text-secondary mb-4">Predict whether annual income exceeds 50,000 INR based on personal and employment details.</p>
+            
+            <form id="predictionForm">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label for="age" class="form-label">🎂 Age</label>
+                        <input type="number" class="form-control" id="age" name="age" required min="17" max="90" placeholder="e.g., 35">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="workclass" class="form-label">💼 Employment Type</label>
+                        <select class="form-select" id="workclass" name="workclass" required>
+                            <option value="">-- Select --</option>
+                            <option value="Private">Private Sector</option>
+                            <option value="Self-emp-not-inc">Self-Employed</option>
+                            <option value="Self-emp-inc">Self-Employed (Inc)</option>
+                            <option value="Federal-gov">Central Government</option>
+                            <option value="Local-gov">Local Government</option>
+                            <option value="State-gov">State Government</option>
+                            <option value="Without-pay">Unpaid</option>
+                            <option value="Never-worked">Never Worked</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="education" class="form-label">🎓 Education Level</label>
+                        <select class="form-select" id="education" name="education" required>
+                            <option value="">-- Select --</option>
+                            <option value="Preschool">Preschool</option>
+                            <option value="1st-4th">Class 1-4</option>
+                            <option value="5th-6th">Class 5-6</option>
+                            <option value="7th-8th">Class 7-8</option>
+                            <option value="9th">Class 9</option>
+                            <option value="10th">10th Grade</option>
+                            <option value="11th">11th Grade</option>
+                            <option value="12th">12th Grade</option>
+                            <option value="Some-college">Some Diploma</option>
+                            <option value="Assoc-voc">Vocational Diploma</option>
+                            <option value="Assoc-acdm">Associate Degree</option>
+                            <option value="Bachelors">Bachelor's Degree</option>
+                            <option value="Masters">Master's Degree</option>
+                            <option value="Prof-school">Professional School</option>
+                            <option value="Doctorate">PhD/Doctorate</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="marital_status" class="form-label">💑 Marital Status</label>
+                        <select class="form-select" id="marital_status" name="marital-status" required>
+                            <option value="">-- Select --</option>
+                            <option value="Never-married">Never Married</option>
+                            <option value="Married-civ-spouse">Married</option>
+                            <option value="Married-spouse-absent">Married - Spouse Absent</option>
+                            <option value="Married-AF-spouse">Married - Armed Forces</option>
+                            <option value="Separated">Separated</option>
+                            <option value="Divorced">Divorced</option>
+                            <option value="Widowed">Widowed</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="occupation" class="form-label">👔 Occupation</label>
+                        <select class="form-select" id="occupation" name="occupation" required>
+                            <option value="">-- Select --</option>
+                            <option value="Exec-managerial">Executive/Managerial</option>
+                            <option value="Prof-specialty">Professional</option>
+                            <option value="Tech-support">Tech Support</option>
+                            <option value="Sales">Sales</option>
+                            <option value="Adm-clerical">Administrative</option>
+                            <option value="Craft-repair">Craft/Repair</option>
+                            <option value="Machine-op-inspct">Machine Operator</option>
+                            <option value="Transport-moving">Transportation</option>
+                            <option value="Handlers-cleaners">Handlers</option>
+                            <option value="Farming-fishing">Farming/Fishing</option>
+                            <option value="Other-service">Other Service</option>
+                            <option value="Protective-serv">Protective Services</option>
+                            <option value="Priv-house-serv">Private Household</option>
+                            <option value="Armed-Forces">Armed Forces</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="race" class="form-label">👥 Race/Ethnicity</label>
+                        <select class="form-select" id="race" name="race" required>
+                            <option value="">-- Select --</option>
+                            <option value="White">White</option>
+                            <option value="Asian-Pac-Islander">Asian/Pacific Islander</option>
+                            <option value="Black">Black</option>
+                            <option value="Amer-Indian-Eskimo">Native American</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="sex" class="form-label">⚥ Gender</label>
+                        <select class="form-select" id="sex" name="sex" required>
+                            <option value="">-- Select --</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="hours_per_week" class="form-label">⏰ Hours per Week</label>
+                        <input type="number" class="form-control" id="hours_per_week" name="hours-per-week" required min="1" max="99" placeholder="e.g., 40">
+                    </div>
+                    <!-- Hidden fields with default values -->
+                    <div class="col-md-4" style="display:none;">
+                        <label for="fnlwgt" class="form-label">Fnlwgt</label>
+                        <input type="number" class="form-control" id="fnlwgt" name="fnlwgt" value="100000" required>
+                    </div>
+                    <div class="col-md-4" style="display:none;">
+                        <label for="capital_gain" class="form-label">Capital Gain</label>
+                        <input type="number" class="form-control" id="capital_gain" name="capital-gain" value="0" required>
+                    </div>
+                    <div class="col-md-4" style="display:none;">
+                        <label for="capital_loss" class="form-label">Capital Loss</label>
+                        <input type="number" class="form-control" id="capital_loss" name="capital-loss" value="0" required>
+                    </div>
+                    <div class="col-md-6" style="display:none;">
+                        <label for="education_num" class="form-label">Education Num</label>
+                        <input type="number" class="form-control" id="education_num" name="education-num" value="10" required>
+                    </div>
+                    <div class="col-md-6" style="display:none;">
+                        <label for="relationship" class="form-label">Relationship</label>
+                        <select class="form-select" id="relationship" name="relationship" required>
+                            <option value="Wife">Wife</option>
+                            <option value="Own-child">Own-child</option>
+                            <option value="Husband" selected>Husband</option>
+                            <option value="Not-in-family">Not-in-family</option>
+                            <option value="Other-relative">Other-relative</option>
+                            <option value="Unmarried">Unmarried</option>
+                        </select>
+                    </div>
+                    <div class="col-md-12" style="display:none;">
+                        <label for="native_country" class="form-label">Native Country</label>
+                        <input type="text" class="form-control" id="native_country" name="native-country" value="India" required>
+                    </div>
+
+                    <div class="col-12 mt-4 text-center">
+                        <button type="submit" class="btn btn-primary w-100">💰 Predict Income</button>
+                    </div>
+                </div>
+            </form>
+
+            <div id="predictionResult" class="prediction-result">
+                <h4 id="resultText" class="mb-0 fw-bold"></h4>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+        window.location.href = '/login/';
+    }
+
+    const form = document.getElementById('predictionForm');
+    const resultDiv = document.getElementById('predictionResult');
+    const resultText = document.getElementById('resultText');
+
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData.entries());
+        
+        // Convert numbers
+        data.age = parseInt(data.age);
+        data['hours-per-week'] = parseInt(data['hours-per-week']);
+        data.fnlwgt = parseInt(data.fnlwgt);
+        data['capital-gain'] = parseInt(data['capital-gain']);
+        data['capital-loss'] = parseInt(data['capital-loss']);
+        data['education-num'] = parseInt(data['education-num']);
+
+        try {
+            const response = await fetch('/api/predict/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(data)
+            });
+
+            if (response.status === 401) {
+                logout();
+                return;
+            }
+
+            const result = await response.json();
+            
+            if (result.error) {
+                alert('Error: ' + result.error);
+                return;
+            }
+            
+            const isAbove50 = result.prediction && result.prediction.includes('Above');
+            const displayPrediction = isAbove50 ? 'Above 50,000 INR' : 'Upto 50,000 INR';
+            const resultClass = isAbove50 ? 'result-high' : 'result-low';
+            
+            resultDiv.style.display = 'block';
+            resultDiv.className = `prediction-result ${resultClass}`;
+            resultText.innerText = `Predicted Income: ${displayPrediction}`;
+            
+            // Show success animation
+            resultDiv.style.animation = 'slideIn 0.5s ease-in-out';
+            
+            // Redirect to dashboard after 2 seconds to show updated data
+            setTimeout(function() {
+                window.location.href = '/dashboard/';
+            }, 2000);
+
+        } catch (error) {
+            console.error('Error:', error);
+            alert('An error occurred during prediction. Please try again.');
+        }
+    });
+});
+</script>
+{% endblock %}

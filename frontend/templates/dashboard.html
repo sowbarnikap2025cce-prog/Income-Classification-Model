@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="glass-card">
+            <h2 class="mb-4 fw-bold">Prediction History</h2>
+            <p class="text-secondary mb-4">View all your past predictions.</p>
+            
+            <div class="table-responsive">
+                <table class="table table-hover table-dark align-middle">
+                    <thead>
+                        <tr>
+                            <th>📅 Date</th>
+                            <th>🎂 Age</th>
+                            <th>🎓 Education</th>
+                            <th>👔 Occupation</th>
+                            <th>⏰ Hours/Week</th>
+                            <th>💰 Result</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyTableBody">
+                        <!-- Populated via JS -->
+                    </tbody>
+                </table>
+                <div id="noDataMsg" class="text-center text-secondary py-4" style="display:none;">
+                    No prediction history found.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", async function() {
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+        window.location.href = '/login/';
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/history/', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (response.status === 401) {
+            logout();
+            return;
+        }
+
+        const data = await response.json();
+        const tbody = document.getElementById('historyTableBody');
+        const noDataMsg = document.getElementById('noDataMsg');
+
+        if (data.length === 0) {
+            noDataMsg.style.display = 'block';
+        } else {
+            data.forEach(item => {
+                const tr = document.createElement('tr');
+                const date = new Date(item.timestamp).toLocaleString('en-IN');
+                const isAbove50 = item.prediction && item.prediction.includes('Above');
+                const predictionText = isAbove50 ? 'Above 50,000 INR' : 'Upto 50,000 INR';
+                const badgeClass = isAbove50 ? 'bg-success' : 'bg-danger';
+
+                tr.innerHTML = `
+                    <td>${date}</td>
+                    <td>${item.input_data.age}</td>
+                    <td>${item.input_data.education}</td>
+                    <td>${item.input_data.occupation}</td>
+                    <td>${item.input_data['hours-per-week']}</td>
+                    <td><span class="badge ${badgeClass}">${predictionText}</span></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+    } catch (error) {
+        console.error('Error:', error);
+    }
+});
+</script>
+{% endblock %}

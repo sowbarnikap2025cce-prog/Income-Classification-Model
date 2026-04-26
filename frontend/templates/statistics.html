@@ -1,0 +1,277 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="glass-card">
+                <h2 class="mb-4 fw-bold">📈 Statistics & Insights</h2>
+                <p class="text-secondary">Detailed statistics about your predictions</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Education Stats -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-6">
+            <div class="glass-card">
+                <h5 class="mb-3 fw-bold">🎓 Education Distribution</h5>
+                <canvas id="educationChart" style="max-height: 350px;"></canvas>
+            </div>
+        </div>
+
+        <!-- Workclass Stats -->
+        <div class="col-md-6">
+            <div class="glass-card">
+                <h5 class="mb-3 fw-bold">💼 Employment Type Distribution</h5>
+                <canvas id="workclassChart" style="max-height: 350px;"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Predictions Timeline -->
+    <div class="row g-3">
+        <div class="col-md-12">
+            <div class="glass-card">
+                <h5 class="mb-3 fw-bold">📅 Predictions Over Time</h5>
+                <canvas id="timelineChart" style="max-height: 300px;"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Statistics Table -->
+    <div class="row g-3 mt-1">
+        <div class="col-md-12">
+            <div class="glass-card">
+                <h5 class="mb-3 fw-bold">📊 Detailed Breakdown</h5>
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <h6 class="text-secondary mb-3">🎓 Top Education Levels</h6>
+                        <div id="educationList" class="stat-list"></div>
+                    </div>
+                    <div class="col-md-4">
+                        <h6 class="text-secondary mb-3">💼 Top Employment Types</h6>
+                        <div id="workclassList" class="stat-list"></div>
+                    </div>
+                    <div class="col-md-4">
+                        <h6 class="text-secondary mb-3">📅 Recent Dates</h6>
+                        <div id="dateList" class="stat-list"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Load Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    let educationChart, workclassChart, timelineChart;
+
+    document.addEventListener("DOMContentLoaded", async function() {
+        const token = localStorage.getItem('access_token');
+        if (!token) {
+            window.location.href = '/login/';
+            return;
+        }
+
+        try {
+            // Fetch statistics data
+            const response = await fetch('/api/statistics/', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (response.status === 401) {
+                logout();
+                return;
+            }
+
+            const data = await response.json();
+
+            // Education Chart
+            const educationLabels = Object.keys(data.education);
+            const educationValues = educationLabels.map(edu => data.education[edu]);
+
+            const educationCtx = document.getElementById('educationChart').getContext('2d');
+            educationChart = new Chart(educationCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: educationLabels,
+                    datasets: [{
+                        data: educationValues,
+                        backgroundColor: [
+                            '#4F46E5', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6',
+                            '#EC4899', '#14B8A6', '#F97316', '#06B6D4', '#84CC16'
+                        ],
+                        borderColor: 'rgba(255, 255, 255, 0.1)',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: '#F8FAFC',
+                                padding: 15,
+                                font: { size: 11 }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Workclass Chart
+            const workclassLabels = Object.keys(data.workclass);
+            const workclassValues = workclassLabels.map(wc => data.workclass[wc]);
+
+            const workclassCtx = document.getElementById('workclassChart').getContext('2d');
+            workclassChart = new Chart(workclassCtx, {
+                type: 'bar',
+                data: {
+                    labels: workclassLabels,
+                    datasets: [{
+                        label: 'Count',
+                        data: workclassValues,
+                        backgroundColor: '#06B6D4',
+                        borderColor: '#0891B2',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#F8FAFC',
+                                font: { size: 12 }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            ticks: {
+                                color: '#94A3B8',
+                                font: { size: 11 }
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                color: '#94A3B8'
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Timeline Chart
+            const dateLabels = Object.keys(data.predictions_by_date).sort();
+            const dateValues = dateLabels.map(date => data.predictions_by_date[date]);
+
+            const timelineCtx = document.getElementById('timelineChart').getContext('2d');
+            timelineChart = new Chart(timelineCtx, {
+                type: 'line',
+                data: {
+                    labels: dateLabels,
+                    datasets: [{
+                        label: 'Predictions',
+                        data: dateValues,
+                        borderColor: '#4F46E5',
+                        backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: '#10B981',
+                        pointBorderColor: '#047857',
+                        pointBorderWidth: 2,
+                        pointRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#F8FAFC',
+                                padding: 20,
+                                font: { size: 12 }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            ticks: {
+                                color: '#94A3B8',
+                                stepSize: 1
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            beginAtZero: true
+                        },
+                        x: {
+                            ticks: {
+                                color: '#94A3B8'
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Populate detailed breakdowns
+            populateList('educationList', data.education);
+            populateList('workclassList', data.workclass);
+            populateList('dateList', data.predictions_by_date);
+
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    });
+
+    function populateList(elementId, data) {
+        const element = document.getElementById(elementId);
+        const sortedItems = Object.entries(data)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 5);
+
+        sortedItems.forEach(([key, value]) => {
+            const item = document.createElement('div');
+            item.className = 'stat-item mb-2 p-2 rounded';
+            item.style.backgroundColor = 'rgba(79, 70, 229, 0.1)';
+            item.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span class="text-secondary">${key}</span>
+                    <span class="badge bg-primary">${value}</span>
+                </div>
+            `;
+            element.appendChild(item);
+        });
+
+        if (sortedItems.length === 0) {
+            element.innerHTML = '<p class="text-secondary text-center py-3">No data available</p>';
+        }
+    }
+</script>
+
+<style>
+    .stat-item {
+        border-left: 3px solid #4F46E5;
+    }
+</style>
+{% endblock %}

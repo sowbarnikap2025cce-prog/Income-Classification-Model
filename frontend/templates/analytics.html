@@ -1,0 +1,302 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="glass-card">
+                <h2 class="mb-4 fw-bold">Analytical Graphs</h2>
+                <p class="text-secondary">Visual analysis of your income predictions</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="glass-card stat-card">
+                <h5 class="text-secondary mb-2">Total Predictions</h5>
+                <h3 id="totalPred" class="fw-bold">0</h3>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="glass-card stat-card">
+                <h5 class="text-secondary mb-2">Above 50,000 INR</h5>
+                <h3 id="above50L" class="fw-bold text-success">0</h3>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="glass-card stat-card">
+                <h5 class="text-secondary mb-2">Upto 50,000 INR</h5>
+                <h3 id="upto50L" class="fw-bold text-danger">0</h3>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="glass-card stat-card">
+                <h5 class="text-secondary mb-2">Average Age</h5>
+                <h3 id="avgAge" class="fw-bold">0</h3>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row g-3">
+        <!-- Income Distribution Pie Chart -->
+        <div class="col-md-6">
+            <div class="glass-card">
+                <h5 class="mb-3 fw-bold">Income Distribution</h5>
+                <canvas id="incomeChart" style="max-height: 300px;"></canvas>
+            </div>
+        </div>
+
+        <!-- Age Statistics -->
+        <div class="col-md-6">
+            <div class="glass-card">
+                <h5 class="mb-3 fw-bold">Age Statistics</h5>
+                <div id="ageStats" class="mt-3">
+                    <p><strong>Minimum Age:</strong> <span id="minAge">-</span></p>
+                    <p><strong>Maximum Age:</strong> <span id="maxAge">-</span></p>
+                    <p><strong>Average Age:</strong> <span id="avgAge2">-</span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Occupation Distribution -->
+    <div class="row g-3 mt-1">
+        <div class="col-md-12">
+            <div class="glass-card">
+                <h5 class="mb-3 fw-bold">Top Occupations</h5>
+                <canvas id="occupationChart" style="max-height: 300px;"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Income vs Age Scatter -->
+    <div class="row g-3 mt-1">
+        <div class="col-md-12">
+            <div class="glass-card">
+                <h5 class="mb-3 fw-bold">Income Distribution by Age</h5>
+                <canvas id="ageIncomeChart" style="max-height: 300px;"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Load Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    let incomeChart, occupationChart, ageIncomeChart;
+
+    document.addEventListener("DOMContentLoaded", async function() {
+        const token = localStorage.getItem('access_token');
+        if (!token) {
+            window.location.href = '/login/';
+            return;
+        }
+
+        try {
+            // Fetch analytics data
+            const response = await fetch('/api/analytics/', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (response.status === 401) {
+                logout();
+                return;
+            }
+
+            const data = await response.json();
+            
+            // Update summary cards
+            document.getElementById('totalPred').textContent = data.total_predictions;
+            document.getElementById('above50L').textContent = data.above_50l;
+            document.getElementById('upto50L').textContent = data.upto_50l;
+            document.getElementById('avgAge').textContent = Math.round(data.avg_age);
+            document.getElementById('minAge').textContent = data.min_age;
+            document.getElementById('maxAge').textContent = data.max_age;
+            document.getElementById('avgAge2').textContent = Math.round(data.avg_age);
+
+            // Income Distribution Pie Chart
+            const incomeCtx = document.getElementById('incomeChart').getContext('2d');
+            incomeChart = new Chart(incomeCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Above 50,000 INR', 'Upto 50,000 INR'],
+                    datasets: [{
+                        data: [data.above_50l, data.upto_50l],
+                        backgroundColor: ['#10B981', '#EF4444'],
+                        borderColor: ['#047857', '#DC2626'],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#F8FAFC',
+                                padding: 20,
+                                font: { size: 12, weight: 'bold' }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Occupation Bar Chart
+            const occupations = data.occupations;
+            const occLabels = Object.keys(occupations).slice(0, 8); // Top 8
+            const occData = occLabels.map(occ => occupations[occ]);
+
+            const occupationCtx = document.getElementById('occupationChart').getContext('2d');
+            occupationChart = new Chart(occupationCtx, {
+                type: 'bar',
+                data: {
+                    labels: occLabels,
+                    datasets: [{
+                        label: 'Count',
+                        data: occData,
+                        backgroundColor: '#4F46E5',
+                        borderColor: '#4338CA',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    indexAxis: 'x',
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#F8FAFC',
+                                font: { size: 12 }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            ticks: {
+                                color: '#94A3B8'
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                color: '#94A3B8'
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Fetch full history for scatter plot
+            const historyResponse = await fetch('/api/history/', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (historyResponse.ok) {
+                const historyData = await historyResponse.json();
+                
+                // Prepare scatter plot data
+                const above50Data = [];
+                const upto50Data = [];
+
+                historyData.forEach(record => {
+                    const age = record.input_data.age;
+                    const prediction = record.prediction;
+
+                    if (prediction.includes('Above')) {
+                        above50Data.push({ x: age, y: Math.random() * 0.3 + 0.7 });
+                    } else {
+                        upto50Data.push({ x: age, y: Math.random() * 0.3 });
+                    }
+                });
+
+                const ageIncomeCtx = document.getElementById('ageIncomeChart').getContext('2d');
+                ageIncomeChart = new Chart(ageIncomeCtx, {
+                    type: 'scatter',
+                    data: {
+                        datasets: [
+                            {
+                                label: 'Above 50,000 INR',
+                                data: above50Data,
+                                backgroundColor: '#10B981',
+                                borderColor: '#047857',
+                                borderWidth: 1
+                            },
+                            {
+                                label: 'Upto 50,000 INR',
+                                data: upto50Data,
+                                backgroundColor: '#EF4444',
+                                borderColor: '#DC2626',
+                                borderWidth: 1
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: {
+                            legend: {
+                                labels: {
+                                    color: '#F8FAFC',
+                                    padding: 20,
+                                    font: { size: 12 }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Age',
+                                    color: '#F8FAFC'
+                                },
+                                ticks: {
+                                    color: '#94A3B8'
+                                },
+                                grid: {
+                                    color: 'rgba(255, 255, 255, 0.1)'
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: 'Income Category',
+                                    color: '#F8FAFC'
+                                },
+                                min: -0.1,
+                                max: 1.1,
+                                ticks: {
+                                    color: '#94A3B8',
+                                    callback: function(value) {
+                                        if (value < 0.5) return 'Upto 50K';
+                                        return 'Above 50K';
+                                    }
+                                },
+                                grid: {
+                                    color: 'rgba(255, 255, 255, 0.1)'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    });
+</script>
+{% endblock %}
